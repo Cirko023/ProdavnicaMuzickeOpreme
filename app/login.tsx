@@ -24,7 +24,7 @@ export default function LoginScreen() {
     setUcitava(true);
     try {
       await prijava(email, lozinka);
-      router.replace('/(tabs)');
+      router.replace('/(tabs)/profile');
     } catch (greska: any) {
       Alert.alert('Greška pri prijavi', greska.message || 'Neuspešna prijava');
     } finally {

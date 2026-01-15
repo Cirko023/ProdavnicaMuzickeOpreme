@@ -1,12 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
-import { useLocalSearchParams, router } from 'expo-router';
-import { ThemedView } from '@/components/themed-view';
 import { ThemedText } from '@/components/themed-text';
-import { Product } from '@/types';
-import { getProduct, createProduct, updateProduct } from '@/services/products';
+import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { createProduct, getProduct, updateProduct } from '@/services/products';
+import { router, useLocalSearchParams } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function AdminProductFormScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -108,7 +107,11 @@ export default function AdminProductFormScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView style={styles.content}>
+        <ScrollView 
+          style={styles.content}
+          contentContainerStyle={styles.scrollContent} // Dodajemo ovo
+          showsVerticalScrollIndicator={false}
+        >
         <ThemedText type="title" style={styles.title}>
           {isNew ? 'Novi proizvod' : 'Izmeni proizvod'}
         </ThemedText>
@@ -235,13 +238,17 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  scrollContent: {
     padding: 16,
-    paddingTop: 60,
+    paddingTop: 20,   
+    paddingBottom: 80, 
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
     marginBottom: 24,
+    marginTop: 0,
   },
   field: {
     marginBottom: 20,
@@ -281,7 +288,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     marginTop: 8,
-    marginBottom: 32,
+    marginBottom: 26,
   },
   saveButtonText: {
     color: '#fff',

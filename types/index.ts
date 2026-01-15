@@ -7,8 +7,8 @@ export interface Product {
   image?: string;
   stock: number;
   brand?: string;
-  createdAt: any;
-  updatedAt: any;
+  createdAt?: any;
+  updatedAt?: any;
 }
 
 export interface CartItem {

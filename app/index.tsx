@@ -17,7 +17,7 @@ export default function Index() {
       } else if (korisnickiPodaci?.uloga === 'admin') {
         router.replace('/(admin)/products');
       } else {
-        router.replace('/(tabs)');
+        router.replace('/(tabs)/profile');
       }
     }
   }, [korisnik, korisnickiPodaci, ucitava]);

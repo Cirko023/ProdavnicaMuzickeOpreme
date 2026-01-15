@@ -147,7 +147,16 @@ export default function ProfileScreen() {
             <ThemedText>Skeniraj QR kod</ThemedText>
           </TouchableOpacity>
         </View>
-
+          {korisnickiPodaci?.uloga === 'admin' && (
+              <TouchableOpacity 
+                style={[styles.adminButton]}
+                onPress={() => router.push('/(admin)/products')}
+              >
+                <ThemedText style={{ color: '#000', fontWeight: 'bold' }}>
+                  ULAZ U ADMIN PANEL
+                </ThemedText>
+              </TouchableOpacity>
+          )}
         <TouchableOpacity
           style={[styles.logoutButton, { backgroundColor: '#F44336' }]}
           onPress={handleLogout}
@@ -160,6 +169,13 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
+  adminButton:{
+    backgroundColor: '#1bd103', 
+    padding: 15, 
+    borderRadius: 10, 
+    marginTop: 2,
+    alignItems: 'center'
+  },
   container: {
     flex: 1,
   },
@@ -230,7 +246,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',
-    marginTop: 24,
+    marginTop: 15,
   },
   logoutText: {
     color: '#000000',
