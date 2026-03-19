@@ -21,6 +21,7 @@ export default function ProfileScreen() {
       await azurirajKorisnickePodatke({ ime, telefon, adresa });
       setEditing(false);
       Alert.alert('Uspešno', 'Podaci su sačuvani');
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (greska) {
       Alert.alert('Greška', 'Neuspešno čuvanje podataka');
     }

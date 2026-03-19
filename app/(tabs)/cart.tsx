@@ -1,23 +1,35 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView, Alert, TextInput } from 'react-native';
-import { ThemedView } from '@/components/themed-view';
-import { ThemedText } from '@/components/themed-text';
-import { useCart } from '@/contexts/CartContext';
-import { useAuth } from '@/contexts/AuthContext';
-import { createOrder } from '@/services/orders';
-import { scheduleOrderNotification } from '@/services/notifications';
-import { router } from 'expo-router';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import React, { useState } from 'react'
+import { View, StyleSheet, TouchableOpacity, ScrollView, Alert, TextInput } from 'react-native'
+import { ThemedView } from '@/components/themed-view'
+import { ThemedText } from '@/components/themed-text'
+import { useAuth } from '@/contexts/AuthContext'
+import { createOrder } from '@/services/orders'
+import { scheduleOrderNotification } from '@/services/notifications'
+import { router } from 'expo-router'
+import { Colors } from '@/constants/theme'
+import { useColorScheme } from '@/hooks/use-color-scheme'
+
+import { useSelector, useDispatch } from 'react-redux'
+import { RootState } from '@/store/store'
+import { ukloniIzKorpe, ocistiKorpu, azurirajKolicinu } from '@/store/cartSlice'
+
 
 export default function CartScreen() {
-  const { stavke, ukloniIzKorpe, azurirajKolicinu, ocistiKorpu, izracunajUkupno } = useCart();
+  const dispatch = useDispatch();
+
+  const stavke = useSelector((state: RootState) => state.cart.stavke)
+
   const { korisnickiPodaci } = useAuth();
   const [adresaDostave, setAdresaDostave] = useState(korisnickiPodaci?.adresa || '');
   const [telefon, setTelefon] = useState(korisnickiPodaci?.telefon || '');
   const [ucitava, setUcitava] = useState(false);
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+
+const ukupno = stavke.reduce(
+    (sum, item) => sum + item.product.price * item.quantity,
+    0
+  );
 
   const handleCheckout = async () => {
     if (!adresaDostave || !telefon) {
@@ -39,7 +51,9 @@ export default function CartScreen() {
     try {
       const idPorudzbine = await createOrder(korisnickiPodaci.uid, stavke, adresaDostave, telefon);
       await scheduleOrderNotification(idPorudzbine);
-      ocistiKorpu();
+
+      dispatch(ocistiKorpu());
+
       Alert.alert('Uspešno', 'Porudžbina je kreirana', [
         { text: 'OK', onPress: () => router.push(`/order/${idPorudzbine}`) },
       ]);
@@ -69,6 +83,7 @@ export default function CartScreen() {
       <ThemedView style={styles.header}>
         <ThemedText type="title" style={styles.title}>Korpa</ThemedText>
       </ThemedView>
+
       <ScrollView style={styles.content}>
         {stavke.map((stavka) => (
           <View key={stavka.product.id} style={[styles.item, { borderColor: colors.icon }]}>
@@ -78,32 +93,51 @@ export default function CartScreen() {
                 {stavka.product.price.toFixed(2)} RSD
               </ThemedText>
             </View>
+
             <View style={styles.quantityContainer}>
               <TouchableOpacity
                 style={[styles.quantityButton, { backgroundColor: colors.icon + '20' }]}
-                onPress={() => azurirajKolicinu(stavka.product.id, stavka.quantity - 1)}
+                onPress={() =>
+                  dispatch(azurirajKolicinu({
+                    id: stavka.product.id,
+                    quantity: stavka.quantity - 1
+                  }))
+                }
               >
                 <ThemedText>-</ThemedText>
               </TouchableOpacity>
+
               <ThemedText style={styles.quantity}>{stavka.quantity}</ThemedText>
+
               <TouchableOpacity
                 style={[styles.quantityButton, { backgroundColor: colors.icon + '20' }]}
-                onPress={() => azurirajKolicinu(stavka.product.id, stavka.quantity + 1)}
+                onPress={() =>
+                  dispatch(azurirajKolicinu({
+                    id: stavka.product.id,
+                    quantity: stavka.quantity + 1
+                  }))
+                }
               >
                 <ThemedText>+</ThemedText>
               </TouchableOpacity>
             </View>
+
             <TouchableOpacity
               style={styles.removeButton}
-              onPress={() => ukloniIzKorpe(stavka.product.id)}
+              onPress={() => dispatch(ukloniIzKorpe(stavka.product.id))}
             >
-              <ThemedText style={[styles.removeText, { color: '#F44336' }]}>Ukloni</ThemedText>
+              <ThemedText style={[styles.removeText, { color: '#F44336' }]}>
+                Ukloni
+              </ThemedText>
             </TouchableOpacity>
           </View>
         ))}
 
         <View style={styles.shippingForm}>
-          <ThemedText type="subtitle" style={styles.formTitle}>Podaci za dostavu</ThemedText>
+          <ThemedText type="subtitle" style={styles.formTitle}>
+            Podaci za dostavu
+          </ThemedText>
+
           <TextInput
             style={[styles.input, { color: colors.text, borderColor: colors.icon }]}
             placeholder="Adresa"
@@ -111,6 +145,7 @@ export default function CartScreen() {
             value={adresaDostave}
             onChangeText={setAdresaDostave}
           />
+
           <TextInput
             style={[styles.input, { color: colors.text, borderColor: colors.icon }]}
             placeholder="Telefon"
@@ -122,9 +157,12 @@ export default function CartScreen() {
         </View>
 
         <View style={[styles.total, { borderTopColor: colors.icon }]}>
-          <ThemedText type="defaultSemiBold" style={styles.totalLabel}>Ukupno:</ThemedText>
+          <ThemedText type="defaultSemiBold" style={styles.totalLabel}>
+            Ukupno:
+          </ThemedText>
+
           <ThemedText type="defaultSemiBold" style={[styles.totalAmount, { color: colors.tint }]}>
-            {izracunajUkupno().toFixed(2)} RSD
+            {ukupno.toFixed(2)} RSD
           </ThemedText>
         </View>
       </ScrollView>

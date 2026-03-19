@@ -45,7 +45,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setKorisnik(firebaseKorisnik);
           
           if (firebaseKorisnik) {
-            // Učitaj korisničke podatke iz Firestore
             try {
               const korisnickiDokument = await getDoc(doc(db, 'users', firebaseKorisnik.uid));
               if (korisnickiDokument.exists()) {
@@ -98,7 +97,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const korisnickiKredencijali = await createUserWithEmailAndPassword(auth, email, lozinka);
     const noviKorisnik = korisnickiKredencijali.user;
     
-    // Kreiraj korisničke podatke u Firestore
+    // Kreiranje korisnickih podatke u Firestoru
     const podaci: KorisnickiPodaci = {
       uid: noviKorisnik.uid,
       email: noviKorisnik.email!,

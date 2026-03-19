@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, FlatList, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
 import ProductCard from './ProductCard';
-import { Product } from '@/types';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '@/store/store';
+import { setProducts } from '@/store/productsSlice';
 import { getProducts, searchProducts } from '@/services/products';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -13,13 +15,15 @@ interface ProductListProps {
 }
 
 export default function ProductList({ category }: ProductListProps) {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  const dispatch = useDispatch();
+  const proizvodi = useSelector((state: RootState) => state.products.proizvodi);
+
+  const [filteredProducts, setFilteredProducts] = useState(proizvodi);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<'name' | 'price-asc' | 'price-desc'>('name');
   const [priceFilter, setPriceFilter] = useState<{ min: number; max: number } | null>(null);
-  
+
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
 
@@ -29,13 +33,13 @@ export default function ProductList({ category }: ProductListProps) {
 
   useEffect(() => {
     filterAndSortProducts();
-  }, [products, searchTerm, sortBy, priceFilter, category]);
+  }, [proizvodi, searchTerm, sortBy, priceFilter, category]);
 
   const loadProducts = async () => {
     setLoading(true);
     try {
       const data = await getProducts(category);
-      setProducts(data);
+      dispatch(setProducts(data));
     } catch (greska) {
       console.error('Greška pri učitavanju proizvoda:', greska);
     } finally {
@@ -45,21 +49,20 @@ export default function ProductList({ category }: ProductListProps) {
 
   const filterAndSortProducts = async () => {
     try {
-      let filtered = [...products];
+      let filtered = [...proizvodi];
 
-      // Search filter
+      // Filter pretrage
       if (searchTerm) {
         filtered = await searchProducts(searchTerm, category);
       }
 
-      // Price filter
+      // Filter za cenu
       if (priceFilter) {
         filtered = filtered.filter(
           (p) => p.price >= priceFilter.min && p.price <= priceFilter.max
         );
       }
 
-      // Sort
       filtered.sort((a, b) => {
         switch (sortBy) {
           case 'price-asc':
@@ -75,7 +78,7 @@ export default function ProductList({ category }: ProductListProps) {
       setFilteredProducts(filtered);
     } catch (greska) {
       console.error('Greška pri filtriranju proizvoda:', greska);
-      setFilteredProducts(products);
+      setFilteredProducts(proizvodi);
     }
   };
 

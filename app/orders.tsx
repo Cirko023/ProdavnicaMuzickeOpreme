@@ -1,78 +1,38 @@
-import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { router } from 'expo-router';
-import { ThemedView } from '@/components/themed-view';
 import { ThemedText } from '@/components/themed-text';
-import { useAuth } from '@/contexts/AuthContext';
-import { getUserOrders } from '@/services/orders';
-import { Order } from '@/types';
+import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { RootState } from '@/store/store';
+import React from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { useSelector } from 'react-redux';
 
 export default function OrdersScreen() {
-  const { korisnickiPodaci } = useAuth();
-  const [porudzbine, setPorudzbine] = useState<Order[]>([]);
-  const [ucitava, setUcitava] = useState(true);
+  const korisnik = useSelector((state: RootState) => state.auth.korisnik);
+
+  const svePorudzbine = useSelector(
+    (state: RootState) => state.orders.porudzbine
+  );
+
+  const mojePorudzbine = svePorudzbine.filter(
+    (order) => order.userId === korisnik?.uid
+  );
+
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
 
-  useEffect(() => {
-    ucitajPorudzbine();
-  }, []);
-
-  const ucitajPorudzbine = async () => {
-    if (!korisnickiPodaci) return;
-    
-    setUcitava(true);
-    try {
-      const podaci = await getUserOrders(korisnickiPodaci.uid);
-      setPorudzbine(podaci);
-    } catch (greska) {
-      console.error('Greška pri učitavanju porudžbina:', greska);
-    } finally {
-      setUcitava(false);
-    }
-  };
-
-  const getStatusColor = (status: Order['status']) => {
-    switch (status) {
-      case 'pending':
-        return '#FF9800';
-      case 'processing':
-        return '#2196F3';
-      case 'shipped':
-        return '#9C27B0';
-      case 'delivered':
-        return '#4CAF50';
-      case 'cancelled':
-        return '#F44336';
-      default:
-        return colors.icon;
-    }
-  };
-
-  const getStatusText = (status: Order['status']) => {
-    switch (status) {
-      case 'pending':
-        return 'Na čekanju';
-      case 'processing':
-        return 'U obradi';
-      case 'shipped':
-        return 'Poslato';
-      case 'delivered':
-        return 'Isporučeno';
-      case 'cancelled':
-        return 'Otkazano';
-      default:
-        return status;
-    }
-  };
-
-  if (ucitava) {
+  if (!korisnik || mojePorudzbine.length === 0) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color={colors.tint} />
-      </View>
+      <ThemedView style={styles.container}>
+        <ThemedView style={styles.header}>
+          <ThemedText type="title" style={styles.title}>Moje porudžbine</ThemedText>
+        </ThemedView>
+        <View style={styles.empty}>
+          <ThemedText style={styles.emptyText}>
+            {korisnik ? 'Nemate porudžbina' : 'Morate biti prijavljeni'}
+          </ThemedText>
+        </View>
+      </ThemedView>
     );
   }
 
@@ -81,38 +41,31 @@ export default function OrdersScreen() {
       <ThemedView style={styles.header}>
         <ThemedText type="title" style={styles.title}>Moje porudžbine</ThemedText>
       </ThemedView>
-      <FlatList
-        data={porudzbine}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
-        ListEmptyComponent={
-          <View style={styles.empty}>
-            <ThemedText style={styles.emptyText}>Nemate porudžbina</ThemedText>
-          </View>
-        }
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={[styles.orderCard, { borderColor: colors.icon }]}
-            onPress={() => router.push(`/order/${item.id}`)}
-          >
-            <View style={styles.orderHeader}>
-              <ThemedText type="defaultSemiBold">Porudžbina #{item.id.slice(0, 8)}</ThemedText>
-              <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
-                <ThemedText style={styles.statusText}>{getStatusText(item.status)}</ThemedText>
-              </View>
+
+      <ScrollView style={styles.content}>
+        {mojePorudzbine.map((order) => (
+          <View key={order.id} style={[styles.orderCard, { borderColor: colors.icon }]}>
+            <ThemedText type="defaultSemiBold">Porudžbina #{order.id.slice(0, 8)}</ThemedText>
+
+            <ThemedText style={[styles.status, { color: colors.tint }]}>
+              Status: {order.status}
+            </ThemedText>
+
+            <ThemedText>
+              Ukupno: {order.total.toFixed(2)} RSD
+            </ThemedText>
+
+            <View style={styles.itemsContainer}>
+              {order.items.map((item, index) => (
+                <View key={index} style={styles.itemRow}>
+                  <ThemedText>{item.product.name}</ThemedText>
+                  <ThemedText>x{item.quantity}</ThemedText>
+                </View>
+              ))}
             </View>
-            <ThemedText style={[styles.date, { color: colors.icon }]}>
-              {item.createdAt?.toDate?.().toLocaleDateString() || 'N/A'}
-            </ThemedText>
-            <ThemedText type="defaultSemiBold" style={[styles.total, { color: colors.tint }]}>
-              Ukupno: {item.total.toFixed(2)} RSD
-            </ThemedText>
-            <ThemedText style={[styles.itemsCount, { color: colors.icon }]}>
-              {item.items.length} proizvoda
-            </ThemedText>
-          </TouchableOpacity>
-        )}
-      />
+          </View>
+        ))}
+      </ScrollView>
     </ThemedView>
   );
 }
@@ -120,11 +73,6 @@ export default function OrdersScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   header: {
     padding: 16,
@@ -134,11 +82,13 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: 'bold',
   },
-  list: {
+  content: {
+    flex: 1,
     padding: 16,
   },
   empty: {
-    padding: 40,
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
   },
   emptyText: {
@@ -146,6 +96,8 @@ const styles = StyleSheet.create({
     color: '#999',
   },
   orderCard: {
+    borderWidth: 1,
+    borderRadius: 8,
     padding: 16,
     marginBottom: 12,
     borderRadius: 8,
@@ -167,15 +119,16 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
   },
-  date: {
+  status: {
+    marginVertical: 4,
     fontSize: 14,
     marginBottom: 8,
   },
-  total: {
-    fontSize: 18,
-    marginBottom: 4,
+  itemsContainer: {
+    marginTop: 10,
   },
-  itemsCount: {
-    fontSize: 14,
+  itemRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
 });
