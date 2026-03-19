@@ -5,15 +5,16 @@ import { HapticTab } from '@/components/haptic-tab';
 import { ThemedText } from '@/components/themed-text';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
-import { useCart } from '@/contexts/CartContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { RootState } from '@/store/store';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { StyleSheet, View } from 'react-native';
+import { useSelector } from 'react-redux';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
-  const { izracunajBrojStavki } = useCart();
-  const brojStavki = izracunajBrojStavki();
+  const stavke = useSelector((state: RootState) => state.cart.stavke);
+  const brojStavki = stavke.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
     <Tabs

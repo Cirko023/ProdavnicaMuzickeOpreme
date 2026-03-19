@@ -5,7 +5,7 @@ import { ThemedView } from '@/components/themed-view';
 import { ThemedText } from '@/components/themed-text';
 import { getAllOrders, updateOrderStatus } from '@/services/orders';
 import { scheduleStatusUpdateNotification } from '@/services/notifications';
-import { Order } from '@/types';
+import { Order } from '@/store/ordersSlice';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 

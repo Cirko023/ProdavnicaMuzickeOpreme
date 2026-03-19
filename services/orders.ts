@@ -1,6 +1,7 @@
 import { collection, query, where, getDocs, doc, getDoc, addDoc, updateDoc, orderBy } from 'firebase/firestore';
 import { db } from '@/config/firebase';
-import { Order, CartItem } from '@/types';
+import type { Order } from '@/store/ordersSlice';
+import type { CartItem } from '@/store/cartSlice';
 
 export const createOrder = async (userId: string, items: CartItem[], shippingAddress?: string, phone?: string): Promise<string> => {
   const total = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);

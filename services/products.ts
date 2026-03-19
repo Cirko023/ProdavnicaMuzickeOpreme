@@ -1,6 +1,6 @@
 import { collection, query, where, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, orderBy } from 'firebase/firestore';
 import { db } from '@/config/firebase';
-import { Product } from '@/types';
+import type { Product } from '@/store/productsSlice';
 
 export const getProducts = async (category?: string): Promise<Product[]> => {
   let q;

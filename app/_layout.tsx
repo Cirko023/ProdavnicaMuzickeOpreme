@@ -4,10 +4,11 @@ import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
 import { AuthProvider } from '@/contexts/AuthContext';
-import { CartProvider } from '@/contexts/CartContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { registerForPushNotifications } from '@/services/notifications';
+import { store } from '@/store/store';
 import { useEffect } from 'react';
+import { Provider } from 'react-redux';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -24,8 +25,8 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <AuthProvider>
-      <CartProvider>
+    <Provider store={store}>
+      <AuthProvider>
         <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <Stack>
           <Stack.Screen name="login" options={{ headerShown: false }} />
@@ -40,7 +41,7 @@ export default function RootLayout() {
         </Stack>
         <StatusBar style="auto" />
       </ThemeProvider>
-      </CartProvider>
-    </AuthProvider>
+      </AuthProvider>
+    </Provider>
   );
 }

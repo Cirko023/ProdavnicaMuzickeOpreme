@@ -1,19 +1,20 @@
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/theme';
-import { useCart } from '@/contexts/CartContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { getProduct } from '@/services/products';
-import { Product } from '@/types';
+import { dodajUKorpu } from '@/store/cartSlice';
+import { Product } from '@/store/productsSlice';
 import { useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { useDispatch } from 'react-redux';
 
 export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [proizvod, setProizvod] = useState<Product | null>(null);
   const [ucitava, setUcitava] = useState(true);
-  const { dodajUKorpu } = useCart();
+  const dispatch = useDispatch();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
 
@@ -38,7 +39,12 @@ export default function ProductDetailScreen() {
 
   const handleAddToCart = () => {
     if (proizvod && proizvod.stock > 0) {
-      dodajUKorpu(proizvod, 1);
+      dispatch(
+        dodajUKorpu({
+          product: proizvod,
+          quantity: 1,
+        })
+      );
       Alert.alert('Uspešno', 'Proizvod je dodat u korpu');
     }
   };

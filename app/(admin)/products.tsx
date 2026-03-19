@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, FlatList, TouchableOpacity, TextInput, Alert, ActivityIndicator } from 'react-native';
-import { ThemedView } from '@/components/themed-view';
 import { ThemedText } from '@/components/themed-text';
-import { Product } from '@/types';
-import { getProducts, deleteProduct } from '@/services/products';
-import { router } from 'expo-router';
+import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { deleteProduct, getProducts } from '@/services/products';
+import { Product } from '@/store/productsSlice';
+import { router } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, FlatList, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function AdminProductsScreen() {
   const [proizvodi, setProizvodi] = useState<Product[]>([]);
