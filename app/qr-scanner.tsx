@@ -19,6 +19,7 @@ export default function QRScannerScreen() {
     if (permission && !permission.granted) {
       requestPermission();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [permission]);
 
   const handleBarCodeScanned = async ({ data }: { data: string }) => {
@@ -26,7 +27,7 @@ export default function QRScannerScreen() {
     
     setScanned(true);
     try {
-      // Pretpostavljamo da QR kod sadrži ID proizvoda
+      // Pretpostavlja se da QR kod sadrži ID proizvoda
       const product = await getProduct(data);
       if (product) {
         Alert.alert('Proizvod pronađen', product.name, [
@@ -35,6 +36,7 @@ export default function QRScannerScreen() {
       } else {
         Alert.alert('Greška', 'Proizvod nije pronađen');
       }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       Alert.alert('Greška', 'Neuspešno skeniranje');
     } finally {

@@ -1,11 +1,13 @@
-import { Colors } from '@/constants/theme';
-import { useCart } from '@/contexts/CartContext';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { Product } from '@/types';
-import { router } from 'expo-router';
-import React from 'react';
-import { Image, StyleSheet, TouchableOpacity, View } from 'react-native';
-import { ThemedText } from './themed-text';
+import { Colors } from '@/constants/theme'
+import { useColorScheme } from '@/hooks/use-color-scheme'
+import { Product } from '@/store/productsSlice'
+import { router } from 'expo-router'
+import React from 'react'
+import { Image, StyleSheet, TouchableOpacity, View } from 'react-native'
+import { ThemedText } from './themed-text'
+
+import { dodajUKorpu } from '@/store/cartSlice'
+import { useDispatch } from 'react-redux'
 
 interface ProductCardProps {
   product: Product;
@@ -14,10 +16,16 @@ interface ProductCardProps {
 export default function ProductCard({ product }: ProductCardProps) {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const { dodajUKorpu } = useCart();
+  
+  const dispatch = useDispatch();
 
   const handleAddToCart = () => {
-    dodajUKorpu(product, 1);
+    dispatch(
+      dodajUKorpu({
+        product: product,
+        quantity: 1
+      })
+    );
   };
 
   return (
