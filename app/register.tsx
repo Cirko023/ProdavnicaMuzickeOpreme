@@ -36,7 +36,7 @@ export default function RegisterScreen() {
     setUcitava(true);
     try {
       await registracija(email, lozinka, ime);
-      router.replace('/(tabs)');
+      router.replace('./(tabs)');
     } catch (greska: any) {
       Alert.alert('Greška pri registraciji', greska.message || 'Neuspešna registracija');
     } finally {

@@ -3,7 +3,7 @@ import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { getProduct } from '@/services/products';
-import { dodajUKorpu } from '@/store/cartSlice';
+import { addToCart } from '@/store/cartSlice';
 import { Product } from '@/store/productsSlice';
 import { useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -40,7 +40,7 @@ export default function ProductDetailScreen() {
   const handleAddToCart = () => {
     if (proizvod && proizvod.stock > 0) {
       dispatch(
-        dodajUKorpu({
+        addToCart({
           product: proizvod,
           quantity: 1,
         })

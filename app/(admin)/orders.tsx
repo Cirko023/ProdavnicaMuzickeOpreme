@@ -1,94 +1,102 @@
-import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
-import { router } from 'expo-router';
-import { ThemedView } from '@/components/themed-view';
-import { ThemedText } from '@/components/themed-text';
-import { getAllOrders, updateOrderStatus } from '@/services/orders';
-import { scheduleStatusUpdateNotification } from '@/services/notifications';
-import { Order } from '@/store/ordersSlice';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { scheduleStatusUpdateNotification } from "@/services/notifications";
+import {
+  Order,
+  startOrdersListener,
+  updateStatusThunk,
+} from "@/store/ordersSlice";
+import { RootState } from "@/store/store";
+import { router } from "expo-router";
+import React, { useEffect } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { useDispatch, useSelector } from "react-redux";
 
 export default function AdminOrdersScreen() {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
+  const dispatch = useDispatch();
+  const orders = useSelector((state: RootState) => state.orders.porudzbine);
+  const loading = useSelector((state: RootState) => state.orders.ucitava);
+
   const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
+  const colors = Colors[colorScheme ?? "light"];
 
   useEffect(() => {
-    loadOrders();
-  }, []);
+    dispatch(startOrdersListener() as any);
+  }, [dispatch]);
 
-  const loadOrders = async () => {
-    setLoading(true);
+  const handleStatusChange = async (
+    orderId: string,
+    newStatus: Order["status"],
+  ) => {
     try {
-      const data = await getAllOrders();
-      setOrders(data);
-    } catch (error) {
-      console.error('Error loading orders:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleStatusChange = async (orderId: string, newStatus: Order['status']) => {
-    try {
-      await updateOrderStatus(orderId, newStatus);
+      await dispatch(
+        updateStatusThunk({ id: orderId, status: newStatus }) as any,
+      ).unwrap();
       await scheduleStatusUpdateNotification(orderId, getStatusText(newStatus));
-      loadOrders();
     } catch (error) {
-      Alert.alert('Greška', 'Neuspešna izmena statusa');
+      Alert.alert("Greška", "Neuspešna izmena statusa");
     }
   };
 
-  const getStatusColor = (status: Order['status']) => {
+  const getStatusColor = (status: Order["status"]) => {
     switch (status) {
-      case 'pending':
-        return '#FF9800';
-      case 'processing':
-        return '#2196F3';
-      case 'shipped':
-        return '#9C27B0';
-      case 'delivered':
-        return '#4CAF50';
-      case 'cancelled':
-        return '#F44336';
+      case "pending":
+        return "#FF9800";
+      case "processing":
+        return "#2196F3";
+      case "shipped":
+        return "#9C27B0";
+      case "delivered":
+        return "#4CAF50";
+      case "cancelled":
+        return "#F44336";
       default:
         return colors.icon;
     }
   };
 
-  const getStatusText = (status: Order['status']) => {
+  const getStatusText = (status: Order["status"]) => {
     switch (status) {
-      case 'pending':
-        return 'Na čekanju';
-      case 'processing':
-        return 'U obradi';
-      case 'shipped':
-        return 'Poslato';
-      case 'delivered':
-        return 'Isporučeno';
-      case 'cancelled':
-        return 'Otkazano';
+      case "pending":
+        return "Na čekanju";
+      case "processing":
+        return "U obradi";
+      case "shipped":
+        return "Poslato";
+      case "delivered":
+        return "Isporučeno";
+      case "cancelled":
+        return "Otkazano";
       default:
         return status;
     }
   };
 
-  const getNextStatus = (currentStatus: Order['status']): Order['status'] | null => {
+  const getNextStatus = (
+    currentStatus: Order["status"],
+  ): Order["status"] | null => {
     switch (currentStatus) {
-      case 'pending':
-        return 'processing';
-      case 'processing':
-        return 'shipped';
-      case 'shipped':
-        return 'delivered';
+      case "pending":
+        return "processing";
+      case "processing":
+        return "shipped";
+      case "shipped":
+        return "delivered";
       default:
         return null;
     }
   };
 
-  if (loading) {
+  if (loading && orders.length === 0) {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color={colors.tint} />
@@ -99,7 +107,9 @@ export default function AdminOrdersScreen() {
   return (
     <ThemedView style={styles.container}>
       <ThemedView style={styles.header}>
-        <ThemedText type="title" style={styles.title}>Porudžbine</ThemedText>
+        <ThemedText type="title" style={styles.title}>
+          Porudžbine
+        </ThemedText>
       </ThemedView>
       <FlatList
         data={orders}
@@ -109,17 +119,33 @@ export default function AdminOrdersScreen() {
           const nextStatus = getNextStatus(item.status);
           return (
             <View style={[styles.orderCard, { borderColor: colors.icon }]}>
-              <TouchableOpacity onPress={() => router.push(`/order/${item.id}`)}>
+              <TouchableOpacity
+                onPress={() => router.push(`/order/${item.id}`)}
+              >
                 <View style={styles.orderHeader}>
-                  <ThemedText type="defaultSemiBold">Porudžbina #{item.id.slice(0, 8)}</ThemedText>
-                  <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
-                    <ThemedText style={styles.statusText}>{getStatusText(item.status)}</ThemedText>
+                  <ThemedText type="defaultSemiBold">
+                    Porudžbina #{item.id.slice(0, 8)}
+                  </ThemedText>
+                  <View
+                    style={[
+                      styles.statusBadge,
+                      { backgroundColor: getStatusColor(item.status) },
+                    ]}
+                  >
+                    <ThemedText style={styles.statusText}>
+                      {getStatusText(item.status)}
+                    </ThemedText>
                   </View>
                 </View>
                 <ThemedText style={[styles.date, { color: colors.icon }]}>
-                  {item.createdAt?.toDate?.().toLocaleDateString() || 'N/A'}
+                  {item.createdAt
+                    ? new Date(item.createdAt).toLocaleDateString()
+                    : "N/A"}
                 </ThemedText>
-                <ThemedText type="defaultSemiBold" style={[styles.total, { color: colors.tint }]}>
+                <ThemedText
+                  type="defaultSemiBold"
+                  style={[styles.total, { color: colors.tint }]}
+                >
                   Ukupno: {item.total.toFixed(2)} RSD
                 </ThemedText>
                 <ThemedText style={[styles.itemsCount, { color: colors.icon }]}>
@@ -128,11 +154,14 @@ export default function AdminOrdersScreen() {
               </TouchableOpacity>
               {nextStatus && (
                 <TouchableOpacity
-                  style={[styles.statusButton, { backgroundColor: colors.tint }]}
+                  style={[
+                    styles.statusButton,
+                    { backgroundColor: colors.tint },
+                  ]}
                   onPress={() => handleStatusChange(item.id, nextStatus)}
                 >
                   <ThemedText style={styles.statusButtonText}>
-                    {getStatusText(nextStatus)}
+                    Prebaci na: {getStatusText(nextStatus)}
                   </ThemedText>
                 </TouchableOpacity>
               )}
@@ -153,68 +182,82 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+
   center: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
+
   header: {
     padding: 16,
     paddingTop: 60,
   },
+
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
+
   list: {
     padding: 16,
   },
+
   empty: {
     padding: 40,
-    alignItems: 'center',
+    alignItems: "center",
   },
+
   orderCard: {
     padding: 16,
     marginBottom: 12,
     borderRadius: 8,
     borderWidth: 1,
   },
+
   orderHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 8,
   },
+
   statusBadge: {
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
   },
+
   statusText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: "600",
   },
+
   date: {
     fontSize: 14,
     marginBottom: 8,
   },
+
   total: {
     fontSize: 18,
     marginBottom: 4,
   },
+
   itemsCount: {
     fontSize: 14,
   },
+
   statusButton: {
     marginTop: 12,
     padding: 10,
     borderRadius: 6,
-    alignItems: 'center',
+    alignItems: "center",
   },
+
   statusButtonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });

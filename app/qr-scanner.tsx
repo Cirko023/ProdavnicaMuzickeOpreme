@@ -27,7 +27,6 @@ export default function QRScannerScreen() {
     
     setScanned(true);
     try {
-      // Pretpostavlja se da QR kod sadrži ID proizvoda
       const product = await getProduct(data);
       if (product) {
         Alert.alert('Proizvod pronađen', product.name, [

@@ -2,51 +2,51 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { deleteProduct, getProducts } from '@/services/products';
-import { Product } from '@/store/productsSlice';
+import { Product, startProductsListener, deleteProductThunk } from '@/store/productsSlice'; 
+import { RootState } from '@/store/store'; 
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, FlatList, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { useDispatch, useSelector } from 'react-redux';
 
 export default function AdminProductsScreen() {
-  const [proizvodi, setProizvodi] = useState<Product[]>([]);
-  const [ucitava, setUcitava] = useState(true);
   const [pretraga, setPretraga] = useState('');
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
 
-  useEffect(() => {
-    ucitajProizvode();
-  }, []);
+  const dispatch = useDispatch();
+  
+  const proizvodi = useSelector((state: RootState) => state.products.proizvodi);
+  const ucitava = useSelector((state: RootState) => state.products.ucitava);
 
-  const ucitajProizvode = async () => {
-    setUcitava(true);
-    try {
-      const podaci = await getProducts();
-      setProizvodi(podaci);
-    } catch (greska) {
-      console.error('Greška pri učitavanju proizvoda:', greska);
-    } finally {
-      setUcitava(false);
-    }
-  };
+  useEffect(() => {
+    const unsubscribe = dispatch(startProductsListener() as any);
+
+    return () => {
+      if (typeof unsubscribe === 'function') unsubscribe();
+    };
+  }, [dispatch]);
 
   const handleDelete = (proizvod: Product) => {
-    Alert.alert('Brisanje proizvoda', `Da li ste sigurni da želite da obrišete ${proizvod.name}?`, [
-      { text: 'Otkaži', style: 'cancel' },
-      {
-        text: 'Obriši',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await deleteProduct(proizvod.id);
-            ucitajProizvode();
-          } catch (greska) {
-            Alert.alert('Greška', 'Neuspešno brisanje proizvoda');
-          }
+    Alert.alert(
+      'Brisanje proizvoda', 
+      `Da li ste sigurni da želite da obrišete ${proizvod.name}?`, 
+      [
+        { text: 'Otkaži', style: 'cancel' },
+        {
+          text: 'Obriši',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await dispatch(deleteProductThunk(proizvod.id) as any).unwrap();
+            } catch (greska) {
+              Alert.alert('Greška', 'Neuspešno brisanje proizvoda');
+            }
+          },
         },
-      },
-    ]);
+      ], 
+      { cancelable: true }
+    );
   };
 
   const filtriraniProizvodi = proizvodi.filter((p) =>
@@ -54,7 +54,7 @@ export default function AdminProductsScreen() {
     p.brand?.toLowerCase().includes(pretraga.toLowerCase())
   );
 
-  if (ucitava) {
+  if (ucitava && proizvodi.length === 0) {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color={colors.tint} />
@@ -126,85 +126,85 @@ export default function AdminProductsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  container: { 
+    flex: 1 
   },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+  center: { 
+    flex: 1, 
+    justifyContent: 'center', 
+    alignItems: 'center' 
   },
-  header: {
-    padding: 16,
-    paddingTop: 60,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  header: { 
+    padding: 16, 
+    paddingTop: 60, 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center' 
   },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    flex: 1,
+  title: { 
+    fontSize: 32, 
+    fontWeight: 'bold', 
+    flex: 1 
   },
-  addButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
+  addButton: { 
+    paddingHorizontal: 16, 
+    paddingVertical: 8, 
+    borderRadius: 8 
   },
-  addButtonText: {
-    color: '#fff',
-    fontWeight: '600',
+  addButtonText: { 
+    color: '#fff', 
+    fontWeight: '600' 
   },
-  searchContainer: {
-    padding: 16,
-    paddingTop: 0,
+  searchContainer: { 
+    padding: 16, 
+    paddingTop: 0 
   },
-  searchInput: {
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
+  searchInput: { 
+    borderWidth: 1, 
+    borderRadius: 8, 
+    padding: 12, 
+    fontSize: 16 
   },
-  list: {
-    padding: 16,
+  list: { 
+    padding: 16 
   },
-  empty: {
-    padding: 40,
-    alignItems: 'center',
+  empty: { 
+    padding: 40, 
+    alignItems: 'center' 
   },
-  productCard: {
-    padding: 16,
-    marginBottom: 12,
-    borderRadius: 8,
-    borderWidth: 1,
+  productCard: { 
+    padding: 16, 
+    marginBottom: 12, 
+    borderRadius: 8, 
+    borderWidth: 1 
   },
-  productInfo: {
-    marginBottom: 12,
+  productInfo: { 
+    marginBottom: 12 
   },
-  category: {
-    fontSize: 14,
-    marginTop: 4,
+  category: { 
+    fontSize: 14, 
+    marginTop: 4 
   },
-  stock: {
-    fontSize: 14,
-    marginTop: 4,
+  stock: { 
+    fontSize: 14, 
+    marginTop: 4 
   },
-  actions: {
-    flexDirection: 'row',
-    gap: 8,
+  actions: { 
+    flexDirection: 'row', 
+    gap: 8 
   },
-  actionButton: {
-    flex: 1,
-    padding: 10,
-    borderRadius: 6,
-    alignItems: 'center',
+  actionButton: { 
+    flex: 1, 
+    padding: 10, 
+    borderRadius: 6, 
+    alignItems: 'center' 
   },
-  deleteButton: {
-    backgroundColor: '#F44336',
+  deleteButton: { 
+    backgroundColor: '#F44336' 
   },
-  actionButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
+  actionButtonText: { 
+    color: '#fff', 
+    fontSize: 14, 
+    fontWeight: '600' 
   },
 });

@@ -2,14 +2,18 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { createProduct, getProduct, updateProduct } from '@/services/products';
+import { getProduct } from '@/services/products'; // Ostavljamo getProduct za učitavanje jednog
+import { addProductThunk, updateProductThunk } from '@/store/productsSlice'; // NOVI THUNKOVI
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { useDispatch } from 'react-redux'; // DODATO
 
 export default function AdminProductFormScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const isNew = id === 'new';
+  const dispatch = useDispatch(); // DODATO
+
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
@@ -21,6 +25,7 @@ export default function AdminProductFormScreen() {
     brand: '',
     image: '',
   });
+
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
 
@@ -75,16 +80,14 @@ export default function AdminProductFormScreen() {
       };
 
       if (isNew) {
-        await createProduct(productData);
+        await dispatch(addProductThunk(productData) as any).unwrap();
         Alert.alert('Uspešno', 'Proizvod je kreiran', [
           { text: 'OK', onPress: () => router.back() },
         ]);
       } else {
-        if (!id) {
-          Alert.alert('Greška', 'ID proizvoda nije pronađen');
-          return;
-        }
-        await updateProduct(id, productData);
+        if (!id) return;
+        
+        await dispatch(updateProductThunk({ id, data: productData }) as any).unwrap();
         Alert.alert('Uspešno', 'Proizvod je ažuriran', [
           { text: 'OK', onPress: () => router.back() },
         ]);
@@ -109,7 +112,7 @@ export default function AdminProductFormScreen() {
     <ThemedView style={styles.container}>
         <ScrollView 
           style={styles.content}
-          contentContainerStyle={styles.scrollContent} // Dodajemo ovo
+          contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
         <ThemedText type="title" style={styles.title}>
@@ -228,71 +231,18 @@ export default function AdminProductFormScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  content: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: 16,
-    paddingTop: 20,   
-    paddingBottom: 80, 
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 24,
-    marginTop: 0,
-  },
-  field: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 16,
-    marginBottom: 8,
-    fontWeight: '600',
-  },
-  input: {
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-  },
-  textArea: {
-    height: 100,
-    textAlignVertical: 'top',
-  },
-  categoryContainer: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  categoryButton: {
-    flex: 1,
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    alignItems: 'center',
-  },
-  categoryText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  saveButton: {
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 8,
-    marginBottom: 26,
-  },
-  saveButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
-  },
+    container: { flex: 1 },
+    center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+    content: { flex: 1 },
+    scrollContent: { padding: 16, paddingTop: 20, paddingBottom: 80 },
+    title: { fontSize: 28, fontWeight: 'bold', marginBottom: 24 },
+    field: { marginBottom: 20 },
+    label: { fontSize: 16, marginBottom: 8, fontWeight: '600' },
+    input: { borderWidth: 1, borderRadius: 8, padding: 12, fontSize: 16 },
+    textArea: { height: 100, textAlignVertical: 'top' },
+    categoryContainer: { flexDirection: 'row', gap: 8 },
+    categoryButton: { flex: 1, padding: 12, borderRadius: 8, borderWidth: 1, alignItems: 'center' },
+    categoryText: { fontSize: 14, fontWeight: '600' },
+    saveButton: { padding: 16, borderRadius: 8, alignItems: 'center', marginTop: 8, marginBottom: 26 },
+    saveButtonText: { color: '#fff', fontSize: 18, fontWeight: '600' },
 });

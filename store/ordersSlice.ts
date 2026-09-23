@@ -1,66 +1,67 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit'
-import { CartItem } from './cartSlice'
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-type OrderItem = {
-    productId: string
-    quantity: number
-}
+import {
+  createOrder,
+  subscribeToOrders,
+  updateOrderStatus as updateOrderInDb,
+} from "@/services/orders";
+import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 export type Order = {
-  id: string
-  userId: string
-  items: CartItem[]
-  total: number
-  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
-  createdAt: any
-  shippingAddress?: string
-  phone?: string
-}
+  id: string;
+  userId: string;
+  items: any[];
+  total: number;
+  status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
+  createdAt: any;
+  shippingAddress?: string;
+  phone?: string;
+};
 
 type OrdersState = {
-    porudzbine: Order[]
-    ucitava: boolean
-}
+  porudzbine: Order[];
+  ucitava: boolean;
+};
 
 const initialState: OrdersState = {
-    porudzbine: [],
-    ucitava: false
-}
+  porudzbine: [],
+  ucitava: false,
+};
+
+export const startOrdersListener = () => (dispatch: any) => {
+  dispatch(setOrdersLoading(true));
+
+  return subscribeToOrders((orders) => {
+    dispatch(setOrders(orders));
+    dispatch(setOrdersLoading(false));
+  });
+};
+
+export const addOrderThunk = createAsyncThunk(
+  "orders/addOrder",
+  async (orderData: any) => {
+    const id = await createOrder(orderData);
+    return id;
+  },
+);
+
+export const updateStatusThunk = createAsyncThunk(
+  "orders/updateStatus",
+  async ({ id, status }: { id: string; status: Order["status"] }) => {
+    await updateOrderInDb(id, status);
+  },
+);
 
 const ordersSlice = createSlice({
-    name: 'orders',
-    initialState,
-
-    reducers: {
-        setOrders: (state, action: PayloadAction<Order[]>) => {
-            state.porudzbine = action.payload
-        },
-
-        addOrder: (state, action: PayloadAction<Order>) => {
-            state.porudzbine.push(action.payload)
-        },
-
-    updateOrderStatus: (state, action: PayloadAction<{id: string, status: Order['status']}>) => {
-        const order = state.porudzbine.find(o => o.id === action.payload.id)
-
-        if(order) {
-            order.status = action.payload.status
-        }
-        },
-
-    removeOrder: (state, action: PayloadAction<string>) => {
-        state.porudzbine = state.porudzbine.filter(
-            order => order.id !== action.payload
-        )
-        },
-
+  name: "orders",
+  initialState,
+  reducers: {
+    setOrders: (state, action: PayloadAction<Order[]>) => {
+      state.porudzbine = action.payload;
+    },
     setOrdersLoading: (state, action: PayloadAction<boolean>) => {
-        state.ucitava = action.payload
-        }
-    }
-})
+      state.ucitava = action.payload;
+    },
+  },
+});
 
-export const { setOrders, addOrder, updateOrderStatus, removeOrder, setOrdersLoading } = ordersSlice.actions
-
-export default ordersSlice.reducer
+export const { setOrders, setOrdersLoading } = ordersSlice.actions;
+export default ordersSlice.reducer;

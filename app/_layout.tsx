@@ -18,7 +18,6 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
 
   useEffect(() => {
-    // Registruj notifikacije sa error handling-om
     registerForPushNotifications().catch((error) => {
       console.log('Greška pri inicijalizaciji notifikacija:', error);
     });

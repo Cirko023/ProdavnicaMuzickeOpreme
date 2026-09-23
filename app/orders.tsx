@@ -1,36 +1,64 @@
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { RootState } from '@/store/store';
-import React from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
-import { useSelector } from 'react-redux';
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { Colors } from "@/constants/theme";
+import { useAuth } from "@/contexts/AuthContext";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { startOrdersListener } from "@/store/ordersSlice";
+import { RootState } from "@/store/store";
+import React, { useEffect } from "react";
+import { ScrollView, StyleSheet, View } from "react-native";
+import { useDispatch, useSelector } from "react-redux";
 
 export default function OrdersScreen() {
-  const korisnik = useSelector((state: RootState) => state.auth.korisnik);
+  const dispatch = useDispatch();
+
+  const { korisnickiPodaci } = useAuth();
+
+  useEffect(() => {
+    const unsubscribe = dispatch(startOrdersListener() as any);
+    return () => {
+      if (typeof unsubscribe === "function") unsubscribe();
+    };
+  }, [dispatch]);
 
   const svePorudzbine = useSelector(
-    (state: RootState) => state.orders.porudzbine
+    (state: RootState) => state.orders.porudzbine,
   );
 
   const mojePorudzbine = svePorudzbine.filter(
-    (order) => order.userId === korisnik?.uid
+    (order) => order.userId === korisnickiPodaci?.uid,
   );
 
   const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
+  const colors = Colors[colorScheme ?? "light"];
 
-  if (!korisnik || mojePorudzbine.length === 0) {
+  if (!korisnickiPodaci) {
     return (
       <ThemedView style={styles.container}>
         <ThemedView style={styles.header}>
-          <ThemedText type="title" style={styles.title}>Moje porudžbine</ThemedText>
+          <ThemedText type="title" style={styles.title}>
+            Moje porudžbine
+          </ThemedText>
         </ThemedView>
         <View style={styles.empty}>
           <ThemedText style={styles.emptyText}>
-            {korisnik ? 'Nemate porudžbina' : 'Morate biti prijavljeni'}
+            Morate biti prijavljeni
           </ThemedText>
+        </View>
+      </ThemedView>
+    );
+  }
+
+  if (mojePorudzbine.length === 0) {
+    return (
+      <ThemedView style={styles.container}>
+        <ThemedView style={styles.header}>
+          <ThemedText type="title" style={styles.title}>
+            Moje porudžbine
+          </ThemedText>
+        </ThemedView>
+        <View style={styles.empty}>
+          <ThemedText style={styles.emptyText}>Nemate porudžbina</ThemedText>
         </View>
       </ThemedView>
     );
@@ -39,20 +67,33 @@ export default function OrdersScreen() {
   return (
     <ThemedView style={styles.container}>
       <ThemedView style={styles.header}>
-        <ThemedText type="title" style={styles.title}>Moje porudžbine</ThemedText>
+        <ThemedText type="title" style={styles.title}>
+          Moje porudžbine
+        </ThemedText>
       </ThemedView>
 
       <ScrollView style={styles.content}>
         {mojePorudzbine.map((order) => (
-          <View key={order.id} style={[styles.orderCard, { borderColor: colors.icon }]}>
-            <ThemedText type="defaultSemiBold">Porudžbina #{order.id.slice(0, 8)}</ThemedText>
+          <View
+            key={order.id}
+            style={[styles.orderCard, { borderColor: colors.icon }]}
+          >
+            <ThemedText type="defaultSemiBold">
+              Porudžbina #{order.id.slice(0, 8)}
+            </ThemedText>
 
             <ThemedText style={[styles.status, { color: colors.tint }]}>
               Status: {order.status}
             </ThemedText>
 
-            <ThemedText>
-              Ukupno: {order.total.toFixed(2)} RSD
+            <ThemedText>Ukupno: {order.total.toFixed(2)} RSD</ThemedText>
+
+            {/* ✅ ISPRAVKA 3: Prikaz datuma - createdAt je broj (milliseconds) nakon
+                transformOrderDoc konverzije, pa koristimo new Date() umesto .toDate() */}
+            <ThemedText style={[styles.date, { color: colors.icon }]}>
+              {order.createdAt
+                ? new Date(order.createdAt).toLocaleDateString()
+                : "N/A"}
             </ThemedText>
 
             <View style={styles.itemsContainer}>
@@ -80,7 +121,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   content: {
     flex: 1,
@@ -88,25 +129,23 @@ const styles = StyleSheet.create({
   },
   empty: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   emptyText: {
     fontSize: 18,
-    color: '#999',
+    color: "#999",
   },
   orderCard: {
     borderWidth: 1,
     borderRadius: 8,
     padding: 16,
     marginBottom: 12,
-    borderRadius: 8,
-    borderWidth: 1,
   },
   orderHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 8,
   },
   statusBadge: {
@@ -115,20 +154,25 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   statusText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   status: {
     marginVertical: 4,
     fontSize: 14,
     marginBottom: 8,
   },
+  date: {
+    fontSize: 13,
+    marginTop: 4,
+    marginBottom: 8,
+  },
   itemsContainer: {
     marginTop: 10,
   },
   itemRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
 });

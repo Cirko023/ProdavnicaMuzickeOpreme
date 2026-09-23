@@ -6,7 +6,7 @@ import React from 'react'
 import { Image, StyleSheet, TouchableOpacity, View } from 'react-native'
 import { ThemedText } from './themed-text'
 
-import { dodajUKorpu } from '@/store/cartSlice'
+import { addToCart } from '@/store/cartSlice'
 import { useDispatch } from 'react-redux'
 
 interface ProductCardProps {
@@ -21,7 +21,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   const handleAddToCart = () => {
     dispatch(
-      dodajUKorpu({
+      addToCart({
         product: product,
         quantity: 1
       })

@@ -1,39 +1,52 @@
-import { collection, query, where, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, orderBy } from 'firebase/firestore';
+import { 
+  collection, 
+  query, 
+  where, 
+  getDocs, 
+  doc, 
+  getDoc, 
+  addDoc, 
+  updateDoc, 
+  deleteDoc, 
+  orderBy, 
+  onSnapshot 
+} from 'firebase/firestore';
 import { db } from '@/config/firebase';
 import type { Product } from '@/store/productsSlice';
 
-export const getProducts = async (category?: string): Promise<Product[]> => {
-  let q;
-  if (category) {
-    q = query(collection(db, 'products'), where('category', '==', category), orderBy('createdAt', 'desc'));
-  } else {
-    q = query(collection(db, 'products'), orderBy('createdAt', 'desc'));
-  }
-  
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map((doc) => ({
+
+// Pomocna funkcija koja konvertuje podatke sa firestorea u obican JS objekat
+const transformDoc = (doc: any) => {
+  const data = doc.data();
+  return {
     id: doc.id,
-    ...doc.data(),
-  })) as Product[];
+    ...data,
+    createdAt: data.createdAt?.toMillis ? data.createdAt.toMillis() : data.createdAt,
+    updatedAt: data.updatedAt?.toMillis ? data.updatedAt.toMillis() : data.updatedAt,
+  };
 };
 
-export const getProduct = async (id: string): Promise<Product | null> => {
-  const docRef = doc(db, 'products', id);
-  const docSnap = await getDoc(docRef);
-  
-  if (docSnap.exists()) {
-    return { id: docSnap.id, ...docSnap.data() } as Product;
-  }
-  return null;
+export const subscribeToProducts = (callback: (products: Product[]) => void) => {
+  const q = query(collection(db, 'products'), orderBy('createdAt', 'desc'));
+
+  return onSnapshot(q, (snapshot) => {
+    const products = snapshot.docs.map(transformDoc) as Product[];
+    callback(products);
+  });
 };
 
-export const createProduct = async (product: Omit<Product, 'id'>): Promise<string> => {
+export const createProduct = async (productData: any): Promise<string> => {
   const docRef = await addDoc(collection(db, 'products'), {
-    ...product,
+    ...productData,
     createdAt: new Date(),
     updatedAt: new Date(),
   });
   return docRef.id;
+};
+
+export const deleteProduct = async (id: string): Promise<void> => {
+  const docRef = doc(db, 'products', id);
+  await deleteDoc(docRef);
 };
 
 export const updateProduct = async (id: string, product: Partial<Product>): Promise<void> => {
@@ -44,9 +57,26 @@ export const updateProduct = async (id: string, product: Partial<Product>): Prom
   });
 };
 
-export const deleteProduct = async (id: string): Promise<void> => {
+export const getProducts = async (category?: string): Promise<Product[]> => {
+  let q;
+  if (category) {
+    q = query(collection(db, 'products'), where('category', '==', category), orderBy('createdAt', 'desc'));
+  } else {
+    q = query(collection(db, 'products'), orderBy('createdAt', 'desc'));
+  }
+  
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(transformDoc) as Product[];
+};
+
+export const getProduct = async (id: string): Promise<Product | null> => {
   const docRef = doc(db, 'products', id);
-  await deleteDoc(docRef);
+  const docSnap = await getDoc(docRef);
+  
+  if (docSnap.exists()) {
+    return transformDoc(docSnap) as Product;
+  }
+  return null;
 };
 
 export const searchProducts = async (searchTerm: string, category?: string): Promise<Product[]> => {
