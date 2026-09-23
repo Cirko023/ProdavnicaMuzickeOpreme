@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import { View, TextInput, StyleSheet, TouchableOpacity, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { useAuth } from '@/contexts/AuthContext';
-import { router } from 'expo-router';
 import { Colors } from '@/constants/theme';
+import { useAuth } from '@/contexts/AuthContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { router } from 'expo-router';
+import React, { useState } from 'react';
+import { Alert, KeyboardAvoidingView, Platform, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
 
 export default function RegisterScreen() {
   const [ime, setIme] = useState('');
@@ -36,7 +36,7 @@ export default function RegisterScreen() {
     setUcitava(true);
     try {
       await registracija(email, lozinka, ime);
-      router.replace('./(tabs)');
+      router.replace('/(tabs)/gitare');
     } catch (greska: any) {
       Alert.alert('Greška pri registraciji', greska.message || 'Neuspešna registracija');
     } finally {
@@ -45,13 +45,13 @@ export default function RegisterScreen() {
   };
 
   return (
-    <KeyboardAvoidingView 
+    <KeyboardAvoidingView
       style={[styles.container, { backgroundColor: colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ThemedView style={styles.content}>
         <ThemedText type="title" style={styles.title}>Registracija</ThemedText>
-        
+
         <TextInput
           style={[styles.input, { color: colors.text, borderColor: colors.icon }]}
           placeholder="Ime"
@@ -59,7 +59,7 @@ export default function RegisterScreen() {
           value={ime}
           onChangeText={setIme}
         />
-        
+
         <TextInput
           style={[styles.input, { color: colors.text, borderColor: colors.icon }]}
           placeholder="Email"
@@ -69,7 +69,7 @@ export default function RegisterScreen() {
           autoCapitalize="none"
           keyboardType="email-address"
         />
-        
+
         <TextInput
           style={[styles.input, { color: colors.text, borderColor: colors.icon }]}
           placeholder="Lozinka"
@@ -78,7 +78,7 @@ export default function RegisterScreen() {
           onChangeText={setLozinka}
           secureTextEntry
         />
-        
+
         <TextInput
           style={[styles.input, { color: colors.text, borderColor: colors.icon }]}
           placeholder="Potvrdite lozinku"
@@ -87,7 +87,7 @@ export default function RegisterScreen() {
           onChangeText={setPotvrdaLozinke}
           secureTextEntry
         />
-        
+
         <TouchableOpacity
           style={[styles.button, { backgroundColor: colors.tint }]}
           onPress={handleRegister}
@@ -97,7 +97,7 @@ export default function RegisterScreen() {
             {ucitava ? 'Registracija...' : 'Registruj se'}
           </ThemedText>
         </TouchableOpacity>
-        
+
         <TouchableOpacity
           onPress={() => router.back()}
           style={styles.linkButton}

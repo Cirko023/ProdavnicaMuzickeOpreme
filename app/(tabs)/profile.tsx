@@ -21,7 +21,7 @@ export default function ProfileScreen() {
       await azurirajKorisnickePodatke({ ime, telefon, adresa });
       setEditing(false);
       Alert.alert('Uspešno', 'Podaci su sačuvani');
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (greska) {
       Alert.alert('Greška', 'Neuspešno čuvanje podataka');
     }
@@ -49,7 +49,7 @@ export default function ProfileScreen() {
       <ScrollView style={styles.content}>
         <View style={styles.section}>
           <ThemedText type="subtitle" style={styles.sectionTitle}>Lični podaci</ThemedText>
-          
+
           <View style={styles.field}>
             <ThemedText style={styles.label}>Email</ThemedText>
             <ThemedText style={[styles.value, { color: colors.icon }]}>
@@ -148,16 +148,16 @@ export default function ProfileScreen() {
             <ThemedText>Skeniraj QR kod</ThemedText>
           </TouchableOpacity>
         </View>
-          {korisnickiPodaci?.uloga === 'admin' && (
-              <TouchableOpacity 
-                style={[styles.adminButton]}
-                onPress={() => router.push('/(admin)/products')}
-              >
-                <ThemedText style={{ color: '#000', fontWeight: 'bold' }}>
-                  ULAZ U ADMIN PANEL
-                </ThemedText>
-              </TouchableOpacity>
-          )}
+        {korisnickiPodaci?.uloga === 'admin' && (
+          <TouchableOpacity
+            style={[styles.adminButton]}
+            onPress={() => router.push('/(admin)/products')}
+          >
+            <ThemedText style={{ color: '#000', fontWeight: 'bold' }}>
+              ULAZ U ADMIN PANEL
+            </ThemedText>
+          </TouchableOpacity>
+        )}
         <TouchableOpacity
           style={[styles.logoutButton, { backgroundColor: '#F44336' }]}
           onPress={handleLogout}
@@ -170,10 +170,10 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  adminButton:{
-    backgroundColor: '#1bd103', 
-    padding: 15, 
-    borderRadius: 10, 
+  adminButton: {
+    backgroundColor: '#1bd103',
+    padding: 15,
+    borderRadius: 10,
     marginTop: 2,
     alignItems: 'center'
   },
@@ -247,7 +247,8 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',
-    marginTop: 15,
+    marginTop: 10,
+    marginBottom: 30,
   },
   logoutText: {
     color: '#000000',

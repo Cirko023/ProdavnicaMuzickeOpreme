@@ -1,0 +1,64 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Pomoćna funkcija: da li je korisnik prijavljen?
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Pomoćna funkcija: da li je korisnik admin?
+    // Čita polje "uloga" iz dokumenta users/{uid}
+    function isAdmin() {
+      return isSignedIn()
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.uloga == 'admin';
+    }
+
+    // Pomoćna funkcija: da li je korisnik vlasnik dokumenta?
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // ---- KORISNICI ----
+    match /users/{userId} {
+      // Svako prijavljen može da čita svoj dokument; admin može sve
+      allow read: if isOwner(userId) || isAdmin();
+
+      // Korisnik može da kreira svoj dokument pri registraciji
+      allow create: if isOwner(userId);
+
+      // Korisnik može da menja svoj dokument, ali NE može da menja polje "uloga"
+      allow update: if isOwner(userId)
+        && request.resource.data.uloga == resource.data.uloga; // ne dozvoli promenu uloge
+
+      // Samo admin može da briše korisnike
+      allow delete: if isAdmin();
+    }
+
+    // ---- PROIZVODI ----
+    match /products/{productId} {
+      // Svi mogu da čitaju proizvode (i neregistrovani, ako želiš)
+      allow read: if true;
+
+      // Samo admin može da dodaje, menja i briše
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ---- PORUDŽBINE ----
+    match /orders/{orderId} {
+      // Korisnik čita samo svoje porudžbine; admin čita sve
+      allow read: if isSignedIn()
+        && (resource.data.userId == request.auth.uid || isAdmin());
+
+      // Korisnik kreira porudžbinu u svoje ime
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid;
+
+      // Korisnik ne može da menja porudžbinu; admin može (menja status)
+      allow update: if isAdmin();
+
+      // Samo admin briše
+      allow delete: if isAdmin();
+    }
+  }
+}
