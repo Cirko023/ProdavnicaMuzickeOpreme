@@ -24,8 +24,10 @@ service cloud.firestore {
       // Svako prijavljen može da čita svoj dokument; admin može sve
       allow read: if isOwner(userId) || isAdmin();
 
-      // Korisnik može da kreira svoj dokument pri registraciji
-      allow create: if isOwner(userId);
+      // Korisnik može da kreira svoj dokument pri registraciji,
+      // ali isključivo sa ulogom 'korisnik' (sprečava samopromociju u admina)
+      allow create: if isOwner(userId)
+        && request.resource.data.uloga == 'korisnik';
 
       // Korisnik može da menja svoj dokument, ali NE može da menja polje "uloga"
       allow update: if isOwner(userId)
